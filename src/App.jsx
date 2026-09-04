@@ -7,7 +7,6 @@ function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
-// دالة لجلب تاريخ ووقت إنشاء الورقة بشكل مرتب
 function getSheetTimestamp() {
   const d = new Date();
   const date = d.toLocaleDateString("ar-EG", {
@@ -129,9 +128,11 @@ export default function App() {
     } catch {
       loaded = null;
     }
-    if (!loaded || !loaded.sheets?.length) loaded = defaultData();
+    if (!loaded || !loaded.sheets) loaded = defaultData();
     setData(loaded);
-    setActiveSheetId(loaded.sheets[0].id);
+    if (loaded.sheets.length > 0) {
+      setActiveSheetId(loaded.sheets[0].id);
+    }
   }, [unlocked]);
 
   useEffect(() => {
@@ -165,7 +166,7 @@ export default function App() {
             <path d="M7.5 10.5V7a4.5 4.5 0 0 1 9 0v3.5" />
           </svg>
           <h1 className="text-2xl font-black text-[#f3e9da] animate-title">
-            دفتر القهوه
+            دفتر قهوتنا
           </h1>
           <p className="text-sm text-[#b8a48d] mt-1 mb-6">
             اكتب الباسورد عشان تدخل الدفتر
@@ -194,6 +195,19 @@ export default function App() {
   }
 
   if (!data) return null;
+
+  // لو مفيش أي ورقة، انشئ ورقة جديدة افتراضياً
+  if (data.sheets.length === 0) {
+    const freshSheet = {
+      id: uid(),
+      name: "ورقة 1",
+      timeStamp: getSheetTimestamp(),
+      orders: [],
+    };
+    setData({ sheets: [freshSheet] });
+    setActiveSheetId(freshSheet.id);
+    return null;
+  }
 
   const sheet =
     data.sheets.find((s) => s.id === activeSheetId) ?? data.sheets[0];
@@ -273,19 +287,10 @@ export default function App() {
       return;
     }
     const remainingSheets = data.sheets.filter((s) => s.id !== sheetToDelete);
-    const finalSheets =
-      remainingSheets.length === 0
-        ? [
-            {
-              id: uid(),
-              name: "ورقة 1",
-              timeStamp: getSheetTimestamp(),
-              orders: [],
-            },
-          ]
-        : remainingSheets;
-    setData((prev) => ({ ...prev, sheets: finalSheets }));
-    setActiveSheetId(finalSheets[0].id);
+    setData((prev) => ({ ...prev, sheets: remainingSheets }));
+    if (remainingSheets.length > 0) {
+      setActiveSheetId(remainingSheets[0].id);
+    }
     cancelDeleteSheet();
   }
 
@@ -300,9 +305,11 @@ export default function App() {
         <header className="flex items-baseline justify-between border-b-2 border-[#3d2e22] pb-4 mb-5">
           <div>
             <h1 className="text-4xl md:text-5xl font-black animate-title">
-              دفتر القهوة ☕
+              دفتر قهوتنا ☕
             </h1>
-            <p className="text-sm text-[#b8a48d] mt-1">حسابات القهوة</p>
+            <p className="text-sm text-[#b8a48d] mt-1">
+              حسابات القهوة بينك وبين زمايلك
+            </p>
           </div>
         </header>
 
